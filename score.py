@@ -236,8 +236,9 @@ def main(args) -> None:
 
         # adjust input PDB name by dropping .pdb if it does exist
         name = pdb[pdb.rfind("/") + 1 :]
-        if name[-4:] == ".pdb":
+        if (name[-4:] == ".pdb") or (name[-4:] == ".cif"):
             name = name[:-4]
+        
 
         with torch.no_grad():
             # run featurize to remap R_idx and add batch dimension

@@ -1,9 +1,34 @@
 from __future__ import print_function
+import sys
+import types
 
+# --- Workaround for Databricks ---
+# ProDy tries to import 'ttk', 'filedialog', and 'messagebox' from tkinter.
+# Need to mock tkinter AND these specific attributes to satisfy the import.
+
+# 1. Create the main mock module
+mock_tk = types.ModuleType("tkinter")
+
+# 2. Create mocks for the submodules ProDy specifically asks for
+mock_tk.ttk = types.ModuleType("ttk")
+mock_tk.filedialog = types.ModuleType("filedialog")
+mock_tk.messagebox = types.ModuleType("messagebox")
+
+# 3. Addding them as empty attributes to satisfy import
+# (The import system looks for these attributes on the module object)
+sys.modules["tkinter"] = mock_tk
+sys.modules["tkinter.ttk"] = mock_tk.ttk
+sys.modules["tkinter.filedialog"] = mock_tk.filedialog
+sys.modules["tkinter.messagebox"] = mock_tk.messagebox
+
+# ---------------------------------------
 import numpy as np
 import torch
 import torch.utils
-from prody import *
+
+# REPLACED: from prody import *
+# WITH: Specific imports only
+from prody import confProDy, parsePDB, writePDB, AtomGroup
 
 confProDy(verbosity="none")
 
