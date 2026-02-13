@@ -45,10 +45,12 @@ def main(args) -> None:
         checkpoint_path = args.checkpoint_global_label_membrane_mpnn
     elif args.model_type == "soluble_mpnn":
         checkpoint_path = args.checkpoint_soluble_mpnn
+    elif args.model_type == "hyper_mpnn":
+        checkpoint_path = args.checkpoint_hyper_mpnn
     else:
         print("Choose one of the available models")
         sys.exit()
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only = True)
     if args.model_type == "ligand_mpnn":
         atom_context_num = checkpoint["atom_context_num"]
         ligand_mpnn_use_side_chain_context = args.ligand_mpnn_use_side_chain_context
@@ -301,6 +303,7 @@ def main(args) -> None:
             decoding_order_stack = torch.cat(decoding_order_list, 0)
 
             output_stats_path = base_folder + name + args.file_ending + ".pt"
+            print("Saving output stats to: ", output_stats_path)
             out_dict = {}
             out_dict["logits"] = logits_stack.cpu().numpy()
             out_dict["probs"] = probs_stack.cpu().numpy()
@@ -347,6 +350,7 @@ if __name__ == "__main__":
     # per_residue_label_membrane_mpnn - ProteinMPNN model trained with addition label per residue specifying if that residue is buried or exposed
     # global_label_membrane_mpnn - ProteinMPNN model trained with global label per PDB id to specify if protein is transmembrane
     # soluble_mpnn - ProteinMPNN trained only on soluble PDB ids
+    # hyper_mpnn - ProteinMPNN trained on proteins from hyperthermophiles
     argparser.add_argument(
         "--checkpoint_protein_mpnn",
         type=str,
@@ -375,6 +379,12 @@ if __name__ == "__main__":
         "--checkpoint_soluble_mpnn",
         type=str,
         default="./model_params/solublempnn_v_48_020.pt",
+        help="Path to model weights.",
+    )
+    argparser.add_argument(
+        "--checkpoint_hyper_mpnn",
+        type=str,
+        default="./model_params/v48_020_epoch300_hyper.pt",
         help="Path to model weights.",
     )
 

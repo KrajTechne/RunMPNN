@@ -61,7 +61,8 @@ class ProteinMPNN(torch.nn.Module):
             self.y_context_encoder_layers = torch.nn.ModuleList(
                 [DecLayerJ(hidden_dim, hidden_dim, dropout=dropout) for _ in range(2)]
             )
-        elif self.model_type == "protein_mpnn" or self.model_type == "soluble_mpnn":
+        # For future added models of ProteinMPNN architecture, model_type should be added to this list---------------------------------------------------
+        elif self.model_type in ['protein_mpnn', 'soluble_mpnn', 'hyper_mpnn']:
             self.features = ProteinFeatures(
                 node_features, edge_features, top_k=k_neighbors, augment_eps=augment_eps
             )
@@ -153,7 +154,8 @@ class ProteinMPNN(torch.nn.Module):
 
             h_V_C = self.V_C(h_V_C)
             h_V = h_V + self.V_C_norm(self.dropout(h_V_C))
-        elif self.model_type == "protein_mpnn" or self.model_type == "soluble_mpnn":
+        # For future added models of ProteinMPNN architecture, model_type should be added to this list---------------------------------------------------
+        elif self.model_type in ['protein_mpnn', 'soluble_mpnn','hyper_mpnn']:
             E, E_idx = self.features(feature_dict)
             h_V = torch.zeros((E.shape[0], E.shape[1], E.shape[-1]), device=device)
             h_E = self.W_e(E)
