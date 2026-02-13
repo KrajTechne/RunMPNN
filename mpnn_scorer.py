@@ -67,6 +67,19 @@ class MPNNScorer:
         out_folder = os.path.abspath(out_folder)
         os.makedirs(out_folder, exist_ok=True)
 
+        pdb_name = os.path.splitext(os.path.basename(pdb_path))[0]
+        output_pt_path = os.path.join(out_folder, f"{pdb_name}.pt")
+
+        # Remove previously generated output file if it exists, ensures each run generates new output file
+        if os.path.exists(output_pt_path):
+            if verbose:
+                print(f"Deleting previously generated output file: {output_pt_path}")
+            try:
+                os.remove(output_pt_path)
+                print(f"Deleted previously generated output file: {output_pt_path}")
+            except OSError as e:
+                print(f"Warning: Could not remove previously generated output file: {e}")
+
         # Build Base Command
         cmd = [
             self.python, self.score_py,
@@ -111,6 +124,10 @@ class MPNNScorer:
             cmd += ["--checkpoint_ligand_mpnn", os.path.join(MODEL_DIR, "ligandmpnn_v_32_010_25.pt")]
         elif model_type == "soluble_mpnn":
             cmd += ["--checkpoint_soluble_mpnn", os.path.join(MODEL_DIR, "solublempnn_v_48_020.pt")]
+        elif model_type == "hyper_mpnn":
+            cmd += ["--checkpoint_hyper_mpnn", os.path.join(MODEL_DIR, "v48_020_epoch300_hyper.pt")]
+        else:
+            raise ValueError(f"Invalid model type: {model_type}")
 
         # --- Handle Optional Arguments ---
 
@@ -169,19 +186,17 @@ class MPNNScorer:
                 val_str = str(v) if v is not None else "None"
                 print(f"{k:30}: {val_str}")
             print("="*40)
-
-        result = subprocess.run(cmd, capture_output=True, text=True)
+            
+            # Allow user to see print statements in main score.py script to ensure verification that scoring is working properly
+            result = subprocess.run(cmd, text=True, stdout=None, stderr=None)
+        else:
+            result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
-            raise RuntimeError(f"Scoring failed with error:\n{result.stderr}")
+            error_message = result.stderr if not verbose else "See error log above."
+            raise RuntimeError(f"Scoring failed with error:\n{error_message}")
 
         # --- Retrieve Data ---
-        
-        pdb_name = os.path.splitext(os.path.basename(pdb_path))[0]
-        print(f"Output saved to: {out_folder}/{pdb_name}.pt")
-        # score.py saves as: {out_folder}/{pdb_name}.pt
-        output_pt_path = os.path.join(out_folder, f"{pdb_name}.pt")
-
         if not os.path.exists(output_pt_path):
             raise FileNotFoundError(f"Expected output file not found: {output_pt_path}")
 
