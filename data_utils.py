@@ -28,7 +28,7 @@ import torch.utils
 
 # REPLACED: from prody import *
 # WITH: Specific imports only
-from prody import confProDy, parsePDB, writePDB, AtomGroup
+from prody import confProDy, parsePDB, writePDB, AtomGroup, parseMMCIF
 
 confProDy(verbosity="none")
 
@@ -799,8 +799,11 @@ def parse_PDB(
             "CZ3",
             "NZ",
         ]
-
-    atoms = parsePDB(input_path)
+    # Check to allow for Structure files saved as CIF or MMCIF files to also be compatible with this function
+    if input_path.endswith(".cif") or input_path.endswith(".mmcif"):
+        atoms = parseMMCIF(input_path)
+    else:
+        atoms = parsePDB(input_path)
     if not parse_atoms_with_zero_occupancy:
         atoms = atoms.select("occupancy > 0")
     if chains:
