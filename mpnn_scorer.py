@@ -11,7 +11,9 @@ class MPNNScorer:
     """
     A specific wrapper for the MPNN scoring protocol
     """
-    def __init__(self, mpnn_weights_path: str,  score_py_path: str ="RunMPNN/score.py", python_path:str ="python"):
+    def __init__(self, mpnn_weights_path: str = "/Volumes/sandbox/model_weights/protein_hunter",  
+                 score_py_path: str ="/Workspace/Users/karthik.raj@bio-techne.com/RunMPNN/score.py", 
+                 python_path:str ="python"):
         self.score_py = score_py_path
         self.python = python_path
         self.mpnn_weights_path = mpnn_weights_path
@@ -68,7 +70,8 @@ class MPNNScorer:
         os.makedirs(out_folder, exist_ok=True)
 
         pdb_name = os.path.splitext(os.path.basename(pdb_path))[0]
-        output_pt_path = os.path.join(out_folder, f"{pdb_name}.pt")
+        file_name = pdb_name + "_" + model_type + "_"
+        output_pt_path = os.path.join(out_folder, f"{file_name}.pt")
 
         # Remove previously generated output file if it exists, ensures each run generates new output file
         if os.path.exists(output_pt_path):
@@ -76,7 +79,6 @@ class MPNNScorer:
                 print(f"Deleting previously generated output file: {output_pt_path}")
             try:
                 os.remove(output_pt_path)
-                print(f"Deleted previously generated output file: {output_pt_path}")
             except OSError as e:
                 print(f"Warning: Could not remove previously generated output file: {e}")
 
@@ -199,5 +201,18 @@ class MPNNScorer:
         # --- Retrieve Data ---
         if not os.path.exists(output_pt_path):
             raise FileNotFoundError(f"Expected output file not found: {output_pt_path}")
-
-        return torch.load(output_pt_path, map_location=torch.device('cpu'))
+        
+        scores = torch.load(output_pt_path, map_location=torch.device('cpu'), weights_only=False)
+        return scores
+    
+    def extract_probs_fab(self, fab_seq: str, scores):
+        """ Extract probs of original fab sequence from respective mpnn results """
+        probs_fab = []
+        chain_mask = scores['chain_mask']
+        for index, (chain_pos, prob_dict) in enumerate(scores['mean_of_probs'].items()):
+            # If residue (chain[index]) is masked, indicates residue is part of fab
+            if chain_mask[index]:
+                aa_fab = fab_seq[index]
+                probs_fab.append(prob_dict[aa_fab])
+        probs_fab = np.array(probs_fab)
+        return probs_fab

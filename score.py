@@ -302,7 +302,7 @@ def main(args) -> None:
             probs_stack = torch.cat(probs_list, 0)
             decoding_order_stack = torch.cat(decoding_order_list, 0)
 
-            output_stats_path = base_folder + name + args.file_ending + ".pt"
+            output_stats_path = base_folder + name + "_" + args.model_type + "_" +  args.file_ending + ".pt"
             print("Saving output stats to: ", output_stats_path)
             out_dict = {}
             out_dict["logits"] = logits_stack.cpu().numpy()
